@@ -1,48 +1,47 @@
 # 7.7–7.8. Pandas
 
-> Модуль 7 · дві частини
+> Модуль 7 · за автосубтитрами
 
 ---
 
-## Головна ідея
+## 7.7. Фільтри, сортування, groupby
 
-**DataFrame** ≈ таблиця SQL; **Series** ≈ колонка.
+**DataFrame** ≈ таблиця; колонки в лапках і часто в `[]`.
 
-Типовий pipeline:
-```python
-df = pd.read_csv("orders.csv")
-df.head()
-df.info()
-df["amount"] = pd.to_numeric(df["amount"], errors="coerce")
-df = df.dropna(subset=["customer_id"])
-g = df.groupby("country", as_index=False)["amount"].sum()
-```
+| Дія | Як |
+|-----|-----|
+| Сортування | `sort_values(..., ascending=...)`; кілька колонок — список + список ascending |
+| Індекс | `reset_index` після сорту/join, якщо індекс заважає |
+| Фільтр | булеві маски; кілька умов — `&` / `\|` і **дужки** навколо кожної |
+| Список значень | `isin(['North','West'])` |
+| Агрегація | `groupby` ≈ SQL GROUP BY / зведена |
 
-### Must-know API
+Паттерн: фільтр → **нова змінна** (`big = df[df.sales > 5000]`), не ламати вихідний df без потреби.
 
-| Дія | Методи |
-|-----|--------|
-| Фільтр | булева маска `df[df.x > 0]` |
-| Select колонок | `df[["a","b"]]` |
-| Group by | `groupby` + `agg` |
-| Join | `merge` (how=left/inner) |
-| Sort / top | `sort_values`, `nlargest` |
-| Дати | `to_datetime`, `.dt` |
-| NULL | `isna`, `fillna` |
-| Reshape | `pivot_table`, `melt` |
+## 7.8. Нові колонки, merge, читання файлів
 
-Частина 2: складніші агрегації, multi-key merge, дублікати (`drop_duplicates`), віконні аналоги через `groupby().rank()` / `transform`.
+Три способи «як if» для колонок:
+1. **`map`** — словник замін по одному стовпцю (`cash`→`готівка`). Спочатку `unique()`, потім map; перевірка — вивести старий+новий стовпець.  
+2. **`np.where`** — бінарна умова (`sales > 5000` → high/low).  
+3. **`np.select`** — кілька умов + `default=None` (обов’язковий «страхувальний» default).
+
+**`merge`** — join таблиць (`on='product_id'`; default inner). Після merge можна одразу рахувати нові поля.
+
+**`read_csv`**: `encoding` (кирилиця / Windows), `sep`, `decimal` для української локалі (кома як десятковий роздільник).
 
 ```mermaid
 flowchart LR
-  CSV[CSV/SQL] --> DF[DataFrame]
-  DF --> G[groupby / merge]
-  G --> Viz[plot / export]
+  CSV[CSV/Excel] --> DF[DataFrame]
+  DF --> F[filter / sort]
+  F --> G[groupby]
+  G --> M[map / where / select]
+  M --> Join[merge]
 ```
 
 ---
 
 ## Самоперевірка
 
-1. `merge` how=left — аналог якого JOIN?  
-2. Чому `errors="coerce"` у `to_numeric`?
+1. Чому `&` без дужок у фільтрі падає?  
+2. map vs np.select?  
+3. Які параметри `read_csv` рятують «кракозябри»?
